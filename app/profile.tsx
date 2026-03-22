@@ -1,312 +1,219 @@
-import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { supabase } from '../lib/supabase';
-import { uploadToBucket } from '../lib/uploadMedia';
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { COLORS } from "../constants/theme";
+import { useAuth } from "../context/AuthContext";
+import { getUserProfile } from "../services/profileService";
+import { UserProfile } from "../types";
 
-export default function Profile() {
-  const [profile, setProfile] = useState({
-    full_name: '',
-    username: '',
-    bio: '',
-    avatar_url: '',
-  });
-
-  const loadProfile = async () => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.log('Profile load error:', error.message);
-        return;
-      }
-
-      if (data) {
-        setProfile({
-          full_name: data.full_name || '',
-          username: data.username || '',
-          bio: data.bio || '',
-          avatar_url: data.avatar_url || '',
-        });
-      }
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Profile load failed');
-    }
-  };
+export default function ProfileScreen() {
+  const { user, logout } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    if (!user) return;
+    getUserProfile(user.uid).then(setProfile);
+  }, [user]);
 
-  const pickAvatar = async () => {
-    try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permission.granted) {
-        Alert.alert('Permission required', 'Gallery permission allow karo');
-        return;
-      }
-
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 1,
-      });
-
-      if (!res.canceled) {
-        const url = await uploadToBucket(res.assets[0].uri, 'avatars', 'avatar');
-        setProfile((prev) => ({
-          ...prev,
-          avatar_url: url,
-        }));
-      }
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Avatar pick failed');
-    }
-  };
-
-  const saveProfile = async () => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-
-      if (!user) {
-        Alert.alert('Error', 'Login required');
-        return;
-      }
-
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
-        full_name: profile.full_name,
-        username: profile.username,
-        bio: profile.bio,
-        avatar_url: profile.avatar_url,
-      });
-
-      if (error) {
-        Alert.alert('Error', error.message);
-        return;
-      }
-
-      Alert.alert('Success', 'Profile saved');
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Profile save failed');
-    }
-  };
-
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        Alert.alert('Error', error.message);
-        return;
-      }
-
-      Alert.alert('Logged out');
-      router.replace('/');
-    } catch (e: any) {
-      Alert.alert('Error', e.message || 'Logout failed');
-    }
-  };
+  if (!profile) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text style={styles.loading}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Profile</Text>
-
-        {profile.avatar_url ? (
-          <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarPlaceholderText}>No Avatar</Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{profile.name?.charAt(0)?.toUpperCase() || "U"}</Text>
           </View>
-        )}
 
-        <TouchableOpacity style={styles.btn} onPress={pickAvatar}>
-          <Text style={styles.btnText}>Pick Avatar</Text>
-        </TouchableOpacity>
+          <Text style={styles.name}>{profile.name}</Text>
+          <Text style={styles.mobile}>+91 {profile.mobile}</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={profile.full_name}
-          onChangeText={(v) => setProfile({ ...profile, full_name: v })}
+          <View style={styles.uidBox}>
+            <Text style={styles.uidLabel}>Game Name</Text>
+            <Text style={styles.uidValue}>{profile.gameName || "-"}</Text>
+          </View>
+
+          <View style={styles.uidBox}>
+            <Text style={styles.uidLabel}>Game UID</Text>
+            <Text style={styles.uidValue}>{profile.gameUid || "-"}</Text>
+          </View>
+        </View>
+
+        <MenuCard
+          title="Account"
+          items={[
+            ["Edit Profile", "/edit-profile"],
+            ["KYC Verification", "/kyc"],
+            ["My Battles", "/my-battles"],
+            ["My Transactions", "/transactions"],
+            ["Wallet", "/wallet"],
+          ]}
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={profile.username}
-          onChangeText={(v) => setProfile({ ...profile, username: v })}
-          autoCapitalize="none"
+        <MenuCard
+          title="Support"
+          items={[
+            ["Help Center", "/help-center"],
+            ["Terms & Conditions", "/terms"],
+            ["Privacy Policy", "/privacy-policy"],
+            ["Contact Support", "/contact-support"],
+          ]}
         />
 
-        <TextInput
-          style={[styles.input, styles.bioInput]}
-          placeholder="Bio"
-          value={profile.bio}
-          onChangeText={(v) => setProfile({ ...profile, bio: v })}
-          multiline
+        <MenuCard
+          title="Admin"
+          items={[
+            ["Manage Battles", "/admin-battles"],
+            ["Declare Results", "/admin-results"],
+          ]}
         />
 
-        <TouchableOpacity style={styles.btn} onPress={saveProfile}>
-          <Text style={styles.btnText}>Save Profile</Text>
-        </TouchableOpacity>
+        <Pressable
+          style={styles.logoutBtn}
+          onPress={() => {
+            logout();
+            router.replace("/home");
+          }}
+        >
+          <Text style={styles.logoutText}>Logout</Text>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/my-posts')}>
-          <Text style={styles.btnText}>My Posts</Text>
-        </TouchableOpacity>
+function MenuCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: [string, any][];
+}) {
+  return (
+    <View style={styles.menuCard}>
+      <Text style={styles.menuTitle}>{title}</Text>
 
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/settings')}>
-          <Text style={styles.btnText}>Settings</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/search')}>
-          <Text style={styles.btnText}>Search</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/stats')}>
-          <Text style={styles.btnText}>App Stats</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/wallet')}>
-          <Text style={styles.btnText}>Wallet</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/saved')}>
-          <Text style={styles.btnText}>Saved Posts</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/my-battles')}>
-          <Text style={styles.btnText}>My Battles</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/creator')}>
-          <Text style={styles.btnText}>Creators</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/notifications')}>
-          <Text style={styles.btnText}>Notifications</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/following-feed')}>
-          <Text style={styles.btnText}>Following Feed</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/blocked-users')}>
-          <Text style={styles.btnText}>Blocked Users</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/my-comments')}>
-          <Text style={styles.btnText}>My Comments</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/help')}>
-          <Text style={styles.btnText}>Help & Support</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/battle-maintenance')}>
-          <Text style={styles.btnText}>Battle Maintenance</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/admin-withdrawals')}>
-          <Text style={styles.btnText}>Admin Withdrawals</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.btn} onPress={() => router.push('/reports')}>
-          <Text style={styles.btnText}>Reports</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-          <Text style={styles.btnText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      {items.map(([label, path], index) => (
+        <Pressable
+          key={label}
+          style={[styles.menuItem, index === items.length - 1 && styles.menuItemLast]}
+          onPress={() => router.push(path)}
+        >
+          <Text style={styles.menuText}>{label}</Text>
+          <Text style={styles.menuArrow}>›</Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 30,
-  },
-  container: {
-    flexGrow: 1,
+  safe: { flex: 1, backgroundColor: COLORS.bg },
+  container: { padding: 16, paddingBottom: 40 },
+  profileCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 24,
     padding: 20,
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
   },
   avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    alignSelf: 'center',
-    marginBottom: 15,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  avatarPlaceholder: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: '#e5e5e5',
-    alignSelf: 'center',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
+  avatarText: {
+    color: COLORS.white,
+    fontSize: 34,
+    fontWeight: "800",
   },
-  avatarPlaceholderText: {
-    color: '#555',
-    fontWeight: '600',
+  name: {
+    color: COLORS.white,
+    fontSize: 22,
+    fontWeight: "800",
+    marginTop: 14,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: '#fff',
+  mobile: {
+    color: COLORS.subtext,
+    marginTop: 6,
+    marginBottom: 14,
   },
-  bioInput: {
-    minHeight: 90,
-    textAlignVertical: 'top',
-  },
-  btn: {
-    backgroundColor: '#111',
+  uidBox: {
+    width: "100%",
+    backgroundColor: COLORS.card2,
+    borderRadius: 14,
     padding: 14,
-    borderRadius: 10,
-    marginBottom: 12,
+    marginTop: 10,
+  },
+  uidLabel: {
+    color: COLORS.subtext,
+    fontSize: 12,
+  },
+  uidValue: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  menuCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 14,
+  },
+  menuTitle: {
+    color: COLORS.white,
+    fontWeight: "800",
+    fontSize: 17,
+    marginBottom: 6,
+  },
+  menuItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomColor: COLORS.border,
+    borderBottomWidth: 1,
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuText: {
+    color: COLORS.white,
+    fontSize: 15,
+  },
+  menuArrow: {
+    color: COLORS.subtext,
+    fontSize: 22,
+    fontWeight: "700",
   },
   logoutBtn: {
-    backgroundColor: 'crimson',
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 12,
+    backgroundColor: COLORS.danger,
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginTop: 8,
   },
-  btnText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
+  logoutText: {
+    color: COLORS.white,
+    fontWeight: "800",
+    fontSize: 15,
   },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loading: { color: COLORS.white, fontSize: 16 },
 });

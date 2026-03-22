@@ -1,42 +1,88 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { supabase } from '../lib/supabase';
+import { router } from "expo-router";
+import React from "react";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { COLORS } from "../constants/theme";
 
-export default function Creators() {
-  const [users, setUsers] = useState<any[]>([]);
-
-  const loadUsers = async () => {
-    const { data } = await supabase.from('profiles').select('*');
-    setUsers(data || []);
-  };
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
+export default function CreatorScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Creators</Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Pressable onPress={() => router.back()}>
+          <Text style={styles.back}>← Back</Text>
+        </Pressable>
 
-      <FlatList
-        data={users}
-        keyExtractor={(item: any) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push(`/creator-profile?id=${item.id}`)}
-          >
-            <Text>{item.full_name || item.username}</Text>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
+        <Text style={styles.heading}>Reel</Text>
+        <Text style={styles.subheading}>Creator videos and content</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.title}>Reel Feature</Text>
+          <Text style={styles.text}>
+            Abhi ye placeholder hai. Yaha baad me short video feed, creators,
+            likes, comments aur upload system connect hoga.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.title}>Coming Features</Text>
+          <Text style={styles.text}>• Video feed</Text>
+          <Text style={styles.text}>• Upload reel</Text>
+          <Text style={styles.text}>• Like / comment</Text>
+          <Text style={styles.text}>• Creator profile</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
-  card: { padding: 12, backgroundColor: '#f5f5f5', borderRadius: 10, marginBottom: 8 },
+  safe: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  },
+  container: {
+    padding: 16,
+    paddingBottom: 30,
+  },
+  back: {
+    color: COLORS.primary,
+    fontWeight: "700",
+    marginBottom: 12,
+    fontSize: 16,
+  },
+  heading: {
+    color: COLORS.white,
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  subheading: {
+    color: COLORS.subtext,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  card: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+  },
+  title: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: "800",
+    marginBottom: 10,
+  },
+  text: {
+    color: COLORS.subtext,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
 });

@@ -1,53 +1,50 @@
-import { router } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AppButton from "@/components/AppButton";
+import Colors from "@/constants/colors";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import React from "react";
+import { Text, View } from "react-native";
 
-export default function Home() {
+export default function SplashScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Reel Battle</Text>
+    <LinearGradient
+      colors={["#09090B", "#141420", "#220C15"]}
+      style={{ flex: 1, justifyContent: "space-between", padding: 24 }}
+    >
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View
+          style={{
+            width: 110,
+            height: 110,
+            borderRadius: 32,
+            backgroundColor: Colors.primary,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 20
+          }}
+        >
+          <Text style={{ color: Colors.white, fontSize: 40, fontWeight: "900" }}>R</Text>
+        </View>
 
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/login')}>
-        <Text style={styles.btnText}>Login OTP</Text>
-      </TouchableOpacity>
+        <Text style={{ color: Colors.white, fontSize: 34, fontWeight: "900" }}>ReelBattle</Text>
+        <Text
+          style={{
+            color: Colors.subText,
+            marginTop: 10,
+            textAlign: "center",
+            fontSize: 15,
+            lineHeight: 22,
+            paddingHorizontal: 18
+          }}
+        >
+          Create reels, join battles, grow your profile and enjoy a premium short video experience.
+        </Text>
+      </View>
 
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/(tabs)/feed')}>
-        <Text style={styles.btnText}>Open App</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/following-feed')}>
-        <Text style={styles.btnText}>Following Feed</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/search')}>
-        <Text style={styles.btnText}>Search</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/notifications')}>
-        <Text style={styles.btnText}>Notifications</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/stats')}>
-        <Text style={styles.btnText}>App Stats</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/admin-withdrawals')}>
-        <Text style={styles.btnText}>Admin Withdrawals</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/reports')}>
-        <Text style={styles.btnText}>Reports</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => router.push('/battle-maintenance')}>
-        <Text style={styles.btnText}>Battle Maintenance</Text>
-      </TouchableOpacity>
-    </View>
+      <View style={{ gap: 12, marginBottom: 20 }}>
+        <AppButton title="Get Started" onPress={() => router.push("/login")} />
+        <AppButton title="Preview App" secondary onPress={() => router.replace("/(tabs)/home")} />
+      </View>
+    </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 25 },
-  btn: { backgroundColor: '#111', padding: 14, borderRadius: 10, marginBottom: 12 },
-  btnText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
-});

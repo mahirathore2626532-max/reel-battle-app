@@ -1,97 +1,120 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import BattleCard from '../components/BattleCard';
-import { autoCloseBattles } from '../lib/admin';
-import { supabase } from '../lib/supabase';
+import { router } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import BattleCard from "../components/BattleCard";
+import { COLORS } from "../constants/theme";
+import { getBattles } from "../services/battleService";
+import { BattleItem } from "../types";
 
-export default function Battles() {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [entryFee, setEntryFee] = useState('');
-  const [hours, setHours] = useState('24');
-  const [search, setSearch] = useState('');
-  const [battles, setBattles] = useState<any[]>([]);
-
-  const loadBattles = async () => {
-    await autoCloseBattles();
-
-    const { data } = await supabase
-      .from('battles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    setBattles(data || []);
-  };
+export default function BattlesScreen() {
+  const [items, setItems] = useState<BattleItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [mode, setMode] = useState("All");
 
   useEffect(() => {
-    loadBattles();
+    getBattles().then(setItems);
   }, []);
 
-  const createBattle = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
-    if (!user) return Alert.alert('Error', 'Login required');
-
-    const fee = Number(entryFee || 0);
-    const endsAt = new Date(Date.now() + Number(hours || 24) * 60 * 60 * 1000).toISOString();
-
-    const { error } = await supabase.from('battles').insert({
-      creator_id: user.id,
-      title,
-      description,
-      entry_fee: fee,
-      prize_pool: 0,
-      status: 'open',
-      ends_at: endsAt,
+  const filtered = useMemo(() => {
+    return items.filter((item) => {
+      const modeMatch = mode === "All" || item.mode === mode;
+      const searchMatch =
+        item.title.toLowerCase().includes(search.toLowerCase()) ||
+        item.map.toLowerCase().includes(search.toLowerCase());
+      return modeMatch && searchMatch;
     });
-
-    if (error) return Alert.alert('Error', error.message);
-
-    setTitle('');
-    setDescription('');
-    setEntryFee('');
-    setHours('24');
-    loadBattles();
-  };
-
-  const filteredBattles = battles.filter((b: any) => {
-    const q = search.toLowerCase();
-    return (
-      (b.title || '').toLowerCase().includes(q) ||
-      (b.description || '').toLowerCase().includes(q)
-    );
-  });
+  }, [items, search, mode]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Battle Rooms</Text>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
+        <Pressable onPress={() => router.back()}>
+          <Text style={styles.back}>← Back</Text>
+        </Pressable>
 
-      <TextInput style={styles.input} placeholder="Search battles" value={search} onChangeText={setSearch} />
-      <TextInput style={styles.input} placeholder="Battle title" value={title} onChangeText={setTitle} />
-      <TextInput style={styles.input} placeholder="Description" value={description} onChangeText={setDescription} />
-      <TextInput style={styles.input} placeholder="Entry fee" value={entryFee} onChangeText={setEntryFee} keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Ends in hours" value={hours} onChangeText={setHours} keyboardType="numeric" />
+        <Text style={styles.heading}>All Battles</Text>
 
-      <TouchableOpacity style={styles.btn} onPress={createBattle}>
-        <Text style={styles.btnText}>Create Battle Room</Text>
-      </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search battle or map"
+          placeholderTextColor={COLORS.subtext}
+        />
 
-      <FlatList
-        data={filteredBattles}
-        keyExtractor={(item: any) => item.id}
-        renderItem={({ item }: any) => (
-          <BattleCard item={item} onPress={() => router.push(`/battle-detail?id=${item.id}`)} />
-        )}
-      />
-    </View>
+        <View style={styles.filterRow}>
+          {["All", "Solo", "Duo", "Squad"].map((item) => (
+            <Pressable
+              key={item}
+              style={[styles.filterBtn, mode === item && styles.filterBtnActive]}
+              onPress={() => setMode(item)}
+            >
+              <Text style={[styles.filterText, mode === item && styles.filterTextActive]}>
+                {item}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <BattleCard
+              item={item}
+              onPress={() =>
+                router.push({
+                  pathname: "/battle-detail",
+                  params: { id: item.id },
+                })
+              }
+            />
+          )}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, marginBottom: 12 },
-  btn: { backgroundColor: '#111', padding: 14, borderRadius: 10, marginBottom: 14 },
-  btnText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
+  safe: { flex: 1, backgroundColor: COLORS.bg },
+  container: { flex: 1, padding: 16 },
+  back: { color: COLORS.primary, marginBottom: 12, fontWeight: "700" },
+  heading: { color: COLORS.white, fontSize: 24, fontWeight: "800", marginBottom: 12 },
+  input: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 14,
+    color: COLORS.white,
+    padding: 14,
+    marginBottom: 12,
+  },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 12,
+  },
+  filterBtn: {
+    backgroundColor: COLORS.card,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  filterBtnActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  filterText: {
+    color: COLORS.subtext,
+  },
+  filterTextActive: {
+    color: COLORS.white,
+    fontWeight: "700",
+  },
 });

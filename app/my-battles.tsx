@@ -1,43 +1,61 @@
-import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import BattleCard from '../components/BattleCard';
-import { supabase } from '../lib/supabase';
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { COLORS } from "../constants/theme";
+import { useAuth } from "../context/AuthContext";
+import { getJoinedBattles } from "../services/battleService";
+import { JoinedBattle } from "../types";
 
-export default function MyBattles() {
-  const [items, setItems] = useState<any[]>([]);
-
-  const loadBattles = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user?.id;
-    if (!userId) return;
-
-    const { data } = await supabase
-      .from('battles')
-      .select('*')
-      .eq('creator_id', userId);
-
-    setItems(data || []);
-  };
+export default function MyBattlesScreen() {
+  const { user } = useAuth();
+  const [items, setItems] = useState<JoinedBattle[]>([]);
 
   useEffect(() => {
-    loadBattles();
-  }, []);
+    if (!user) return;
+    getJoinedBattles(user.uid).then(setItems);
+  }, [user]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Battles</Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Pressable onPress={() => router.back()}>
+          <Text style={styles.back}>← Back</Text>
+        </Pressable>
 
-      <FlatList
-        data={items}
-        keyExtractor={(item: any) => item.id}
-        renderItem={({ item }) => <BattleCard item={item} />}
-        ListEmptyComponent={<Text>No battles</Text>}
-      />
-    </View>
+        <Text style={styles.heading}>My Battles</Text>
+
+        {items.length === 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.empty}>No joined battles yet</Text>
+          </View>
+        ) : (
+          items.map((item) => (
+            <View key={item.id} style={styles.card}>
+              <Text style={styles.title}>{item.battleTitle}</Text>
+              <Text style={styles.sub}>Entry Fee: ₹{item.entryFee}</Text>
+              <Text style={styles.sub}>Status: {item.status}</Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
+  safe: { flex: 1, backgroundColor: COLORS.bg },
+  container: { padding: 16, paddingBottom: 40 },
+  back: { color: COLORS.primary, marginBottom: 12, fontWeight: "700" },
+  heading: { color: COLORS.white, fontSize: 24, fontWeight: "800", marginBottom: 12 },
+  card: {
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 12,
+  },
+  title: { color: COLORS.white, fontWeight: "800", fontSize: 16 },
+  sub: { color: COLORS.subtext, marginTop: 8 },
+  empty: { color: COLORS.subtext },
 });

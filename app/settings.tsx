@@ -1,85 +1,40 @@
-import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import { supabase } from '../lib/supabase';
+import OptionRow from "@/components/OptionRow";
+import ScreenHeader from "@/components/ScreenHeader";
+import Colors from "@/constants/colors";
+import { auth } from "@/firebase";
+import { router } from "expo-router";
+import { signOut } from "firebase/auth";
+import React from "react";
+import { Alert, SafeAreaView, View } from "react-native";
 
 export default function SettingsScreen() {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [privateAccount, setPrivateAccount] = useState(false);
-  const [userId, setUserId] = useState('');
-
-  const loadSettings = async () => {
-    const { data } = await supabase.auth.getSession();
-    const user = data.session?.user;
-    if (!user) return;
-    setUserId(user.id);
-
-    const { data: settings } = await supabase
-      .from('app_settings')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (settings) {
-      setNotificationsEnabled(!!settings.notifications_enabled);
-      setPrivateAccount(!!settings.private_account);
-    } else {
-      await supabase.from('app_settings').insert({
-        user_id: user.id,
-        notifications_enabled: true,
-        private_account: false,
-      });
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/login");
+    } catch (e) {
+      Alert.alert("Error", "Logout fail hua");
     }
   };
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const saveSettings = async () => {
-    if (!userId) return;
-
-    const { error } = await supabase.from('app_settings').upsert({
-      user_id: userId,
-      notifications_enabled: notificationsEnabled,
-      private_account: privateAccount,
-    });
-
-    if (error) return Alert.alert('Error', error.message);
-    Alert.alert('Success', 'Settings saved');
-  };
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bg }}>
+      <View style={{ flex: 1, padding: 22 }}>
+        <ScreenHeader title="Settings" showBack />
 
-      <View style={styles.row}>
-        <Text>Notifications</Text>
-        <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} />
+        <OptionRow icon="person-circle-outline" title="Account" subTitle="Manage your profile details" />
+        <OptionRow icon="lock-closed-outline" title="Privacy Policy" subTitle="Read privacy information" />
+        <OptionRow icon="shield-checkmark-outline" title="Security" subTitle="Phone, password, device safety" />
+        <OptionRow icon="help-circle-outline" title="Help & Support" subTitle="Contact support team" />
+        <OptionRow icon="information-circle-outline" title="About App" subTitle="Version 1.0.0" />
+        <OptionRow
+          icon="log-out-outline"
+          title="Logout"
+          subTitle="Sign out from this device"
+          danger
+          onPress={handleLogout}
+        />
       </View>
-
-      <View style={styles.row}>
-        <Text>Private Account</Text>
-        <Switch value={privateAccount} onValueChange={setPrivateAccount} />
-      </View>
-
-      <TouchableOpacity style={styles.btn} onPress={saveSettings}>
-        <Text style={styles.btnText}>Save Settings</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20 },
-  row: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  btn: { backgroundColor: '#111', padding: 14, borderRadius: 10, marginTop: 20 },
-  btnText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
-});
