@@ -1,212 +1,317 @@
-import { useLocalSearchParams } from "expo-router";
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useMemo, useState } from 'react';
 import {
-  addDoc,
-  collection,
-  doc,
-  increment,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
+  Image,
   SafeAreaView,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
-} from "react-native";
-import { getLoggedInUser, LoggedInUser } from "../lib/auth";
-import { db } from "../lib/firebase";
+} from 'react-native';
 
-type CommentItem = {
-  id: string;
-  postId: string;
-  userId: string;
-  userName: string;
-  text: string;
-};
+const commentsData = [
+  {
+    id: '1',
+    user: '@anjali_editz',
+    name: 'Anjali',
+    text: 'Lighting and transitions are next level 🔥',
+    time: '2m ago',
+    likes: 24,
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
+  },
+  {
+    id: '2',
+    user: '@harry_beats',
+    name: 'Harry',
+    text: 'Beat sync bahut mast hai bro 👏',
+    time: '9m ago',
+    likes: 15,
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400&auto=format&fit=crop',
+  },
+  {
+    id: '3',
+    user: '@studio_vibe',
+    name: 'Studio Vibe',
+    text: 'Camera movement smooth hai. Kis device pe shoot kiya?',
+    time: '18m ago',
+    likes: 8,
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop',
+  },
+  {
+    id: '4',
+    user: '@neha.creates',
+    name: 'Neha',
+    text: 'Costume colors and frame composition dono perfect lag rahe hain ✨',
+    time: '34m ago',
+    likes: 11,
+    avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=400&auto=format&fit=crop',
+  },
+];
 
 export default function PostCommentsScreen() {
-  const { postId } = useLocalSearchParams<{ postId: string }>();
-  const [currentUser, setCurrentUser] = useState<LoggedInUser | null>(null);
-  const [comments, setComments] = useState<CommentItem[]>([]);
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
+  const params = useLocalSearchParams();
+  const [comment, setComment] = useState('');
 
-  useEffect(() => {
-    getLoggedInUser().then(setCurrentUser);
-  }, []);
-
-  useEffect(() => {
-    if (!postId) return;
-
-    const q = query(
-      collection(db, "post_comments"),
-      orderBy("createdAt", "asc")
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const list: CommentItem[] = snapshot.docs
-          .map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<CommentItem, "id">),
-          }))
-          .filter((item) => item.postId === postId);
-
-        setComments(list);
-        setLoading(false);
-      },
-      () => setLoading(false)
-    );
-
-    return unsub;
-  }, [postId]);
-
-  const handleAddComment = async () => {
-    if (!currentUser || !postId) return;
-
-    if (!text.trim()) {
-      Alert.alert("Error", "Comment likho");
-      return;
-    }
-
-    try {
-      await addDoc(collection(db, "post_comments"), {
-        postId,
-        userId: currentUser.id,
-        userName: currentUser.name,
-        text: text.trim(),
-        createdAt: serverTimestamp(),
-      });
-
-      await updateDoc(doc(db, "posts", postId), {
-        commentCount: increment(1),
-      });
-
-      setText("");
-    } catch (error: any) {
-      Alert.alert("Error", error?.message || "Comment add nahi hua");
-    }
-  };
+  const postTitle = useMemo(() => {
+    return typeof params.title === 'string' ? params.title : 'Epic Dance Battle';
+  }, [params.title]);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Comments</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#070B14" />
 
-        {loading ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <FlatList
-            data={comments}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingBottom: 90 }}
-            ListEmptyComponent={<Text style={styles.emptyText}>Koi comment nahi hai</Text>}
-            renderItem={({ item }) => (
-              <View style={styles.commentCard}>
-                <Text style={styles.commentUser}>{item.userName}</Text>
-                <Text style={styles.commentId}>{item.userId}</Text>
-                <Text style={styles.commentText}>{item.text}</Text>
-              </View>
-            )}
-          />
-        )}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
 
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Comment likho..."
-            placeholderTextColor="#888"
-            value={text}
-            onChangeText={setText}
-          />
-          <Pressable style={styles.sendBtn} onPress={handleAddComment}>
-            <Text style={styles.sendText}>Send</Text>
-          </Pressable>
+        <View style={{ flex: 1, marginHorizontal: 12 }}>
+          <Text style={styles.headerTitle}>Comments</Text>
+          <Text style={styles.headerSub} numberOfLines={1}>
+            {postTitle}
+          </Text>
         </View>
+
+        <TouchableOpacity style={styles.headerBtn}>
+          <Ionicons name="filter-outline" size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.highlightCard}>
+        <View style={styles.highlightLeft}>
+          <Ionicons name="chatbubbles-outline" size={22} color="#7C3AED" />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.highlightTitle}>1,284 Comments</Text>
+            <Text style={styles.highlightSub}>Most reactions in last 24 hours</Text>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+        {commentsData.map((item) => (
+          <View key={item.id} style={styles.commentCard}>
+            <Image source={{ uri: item.avatar }} style={styles.avatar} />
+
+            <View style={styles.commentBody}>
+              <View style={styles.commentTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.username}>{item.user}</Text>
+                  <Text style={styles.time}>{item.time}</Text>
+                </View>
+
+                <TouchableOpacity style={styles.likeChip}>
+                  <Ionicons name="heart-outline" size={14} color="#fff" />
+                  <Text style={styles.likeChipText}>{item.likes}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.commentText}>{item.text}</Text>
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.actionMiniBtn}>
+                  <Ionicons name="chatbubble-outline" size={16} color="#CBD5E1" />
+                  <Text style={styles.actionMiniText}>Reply</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionMiniBtn}>
+                  <Ionicons name="heart-outline" size={16} color="#CBD5E1" />
+                  <Text style={styles.actionMiniText}>Like</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionMiniBtn}>
+                  <Ionicons name="flag-outline" size={16} color="#CBD5E1" />
+                  <Text style={styles.actionMiniText}>Report</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.inputWrap}>
+        <View style={styles.inputBox}>
+          <TextInput
+            value={comment}
+            onChangeText={setComment}
+            placeholder="Write a comment..."
+            placeholderTextColor="#94A3B8"
+            style={styles.input}
+          />
+          <TouchableOpacity style={styles.emojiBtn}>
+            <Ionicons name="happy-outline" size={20} color="#CBD5E1" />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.sendBtn}>
+          <Ionicons name="send" size={18} color="#0F172A" />
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#f5f7fb",
-  },
   container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#070B14',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#111",
-    marginBottom: 14,
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  commentCard: {
-    backgroundColor: "#fff",
+  headerBtn: {
+    width: 42,
+    height: 42,
     borderRadius: 14,
-    padding: 12,
-    marginBottom: 10,
+    backgroundColor: '#121826',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  commentUser: {
-    fontWeight: "700",
-    color: "#111",
-    fontSize: 15,
+  headerTitle: {
+    color: '#fff',
+    fontSize: 19,
+    fontWeight: '800',
   },
-  commentId: {
-    color: "#666",
+  headerSub: {
+    color: '#94A3B8',
     fontSize: 12,
     marginTop: 2,
   },
-  commentText: {
-    color: "#222",
-    fontSize: 14,
+  highlightCard: {
+    marginHorizontal: 16,
     marginTop: 8,
+    backgroundColor: '#121826',
+    borderRadius: 18,
+    padding: 14,
   },
-  inputRow: {
-    position: "absolute",
+  highlightLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  highlightTitle: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  highlightSub: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 110,
+  },
+  commentCard: {
+    flexDirection: 'row',
+    backgroundColor: '#121826',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginRight: 12,
+  },
+  commentBody: {
+    flex: 1,
+  },
+  commentTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  username: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  time: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginTop: 3,
+  },
+  likeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1F2937',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    gap: 5,
+  },
+  likeChipText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  commentText: {
+    color: '#E2E8F0',
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 10,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+    gap: 10,
+  },
+  actionMiniBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1F2937',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  actionMiniText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  inputWrap: {
+    position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 12,
-    flexDirection: "row",
-    alignItems: "center",
+    bottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  inputBox: {
+    flex: 1,
+    backgroundColor: '#121826',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
-    height: 48,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    marginRight: 10,
-    fontSize: 15,
-    color: "#111",
+    color: '#fff',
+    fontSize: 14,
+  },
+  emojiBtn: {
+    marginLeft: 8,
   },
   sendBtn: {
-    height: 48,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    backgroundColor: "#2563eb",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  emptyText: {
-    textAlign: "center",
-    color: "#666",
-    marginTop: 40,
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: '#FACC15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

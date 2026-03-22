@@ -1,340 +1,284 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 import {
-  Alert,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
 
-const QUICK_AMOUNTS = [49, 99, 199, 499, 999];
+const quickAmounts = ['100', '200', '500', '1000', '2000', '5000'];
 
 export default function AddMoneyScreen() {
-  const [amount, setAmount] = useState("");
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(199);
-
-  const finalAmount = useMemo(() => {
-    if (amount.trim()) {
-      const parsed = Number(amount);
-      return Number.isFinite(parsed) ? parsed : 0;
-    }
-    return selectedAmount ?? 0;
-  }, [amount, selectedAmount]);
-
-  const onSelectQuickAmount = (value: number) => {
-    setSelectedAmount(value);
-    setAmount("");
-  };
-
-  const handleAddMoney = () => {
-    if (!finalAmount || finalAmount <= 0) {
-      Alert.alert("Invalid amount", "Please enter a valid amount.");
-      return;
-    }
-
-    Alert.alert(
-      "Payment disabled",
-      `₹${finalAmount} add karne ka UI ready hai.\n\nRazorpay integration baad me add karenge.`
-    );
-  };
+  const [amount, setAmount] = useState('500');
+  const [selectedBonus, setSelectedBonus] = useState('10% Bonus');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={["#0F172A", "#111827", "#1E293B"]}
-        style={styles.container}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.headerRow}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <Text style={styles.backButtonText}>←</Text>
-            </Pressable>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#09111F" />
 
-            <Text style={styles.headerTitle}>Add Money</Text>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
 
-            <View style={styles.headerSpacer} />
-          </View>
+        <Text style={styles.headerTitle}>Add Money</Text>
 
-          <View style={styles.heroCard}>
-            <Text style={styles.heroLabel}>Wallet Top Up</Text>
-            <Text style={styles.heroAmount}>
-              ₹{finalAmount > 0 ? finalAmount : 0}
-            </Text>
-            <Text style={styles.heroSubtext}>
-              Secure payment integration will be enabled later
-            </Text>
-          </View>
+        <TouchableOpacity style={styles.headerBtn}>
+          <Ionicons name="wallet-outline" size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Choose Amount</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Current Wallet Balance</Text>
+          <Text style={styles.balanceAmount}>₹12,580</Text>
+          <Text style={styles.balanceSub}>Top up your wallet to join more battles</Text>
+        </View>
 
-            <View style={styles.quickGrid}>
-              {QUICK_AMOUNTS.map((item) => {
-                const active = !amount && selectedAmount === item;
-                return (
-                  <Pressable
-                    key={item}
-                    onPress={() => onSelectQuickAmount(item)}
-                    style={[styles.amountChip, active && styles.amountChipActive]}
-                  >
-                    <Text
-                      style={[
-                        styles.amountChipText,
-                        active && styles.amountChipTextActive,
-                      ]}
-                    >
-                      ₹{item}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
+        <Text style={styles.sectionTitle}>Enter Amount</Text>
+        <View style={styles.inputCard}>
+          <Text style={styles.currency}>₹</Text>
+          <TextInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="0"
+            placeholderTextColor="#64748B"
+            keyboardType="numeric"
+            style={styles.amountInput}
+          />
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Custom Amount</Text>
+        <View style={styles.quickGrid}>
+          {quickAmounts.map((item) => {
+            const active = amount === item;
+            return (
+              <TouchableOpacity
+                key={item}
+                style={[styles.quickChip, active && styles.quickChipActive]}
+                onPress={() => setAmount(item)}
+              >
+                <Text style={[styles.quickChipText, active && styles.quickChipTextActive]}>
+                  ₹{item}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-            <View style={styles.inputWrap}>
-              <Text style={styles.rupee}>₹</Text>
-              <TextInput
-                value={amount}
-                onChangeText={(text) => {
-                  const cleaned = text.replace(/[^0-9]/g, "");
-                  setAmount(cleaned);
-                  if (cleaned.length > 0) {
-                    setSelectedAmount(null);
-                  }
-                }}
-                placeholder="Enter amount"
-                placeholderTextColor="#94A3B8"
-                keyboardType="numeric"
-                style={styles.input}
-                maxLength={6}
-              />
-            </View>
-
-            <Text style={styles.helperText}>
-              Minimum amount ₹1. Payment gateway abhi disabled hai.
-            </Text>
-          </View>
-
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Current Status</Text>
-            <Text style={styles.infoText}>
-              • UI complete hai{"\n"}
-              • Payment gateway temporarily disabled hai{"\n"}
-              • Razorpay / billing integration baad me add karenge
-            </Text>
-          </View>
-
-          <Pressable style={styles.primaryButton} onPress={handleAddMoney}>
-            <Text style={styles.primaryButtonText}>
-              Continue with ₹{finalAmount > 0 ? finalAmount : 0}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.secondaryButton}
-            onPress={() =>
-              Alert.alert(
-                "Coming soon",
-                "Transaction history aur real wallet balance baad me add karenge."
-              )
-            }
+        <Text style={styles.sectionTitle}>Offers</Text>
+        <View style={styles.offerCard}>
+          <TouchableOpacity
+            style={[
+              styles.offerOption,
+              selectedBonus === '10% Bonus' && styles.offerOptionActive,
+            ]}
+            onPress={() => setSelectedBonus('10% Bonus')}
           >
-            <Text style={styles.secondaryButtonText}>View Wallet Details</Text>
-          </Pressable>
-        </ScrollView>
-      </LinearGradient>
+            <View>
+              <Text style={styles.offerTitle}>10% Bonus</Text>
+              <Text style={styles.offerSub}>On recharge above ₹500</Text>
+            </View>
+            <Ionicons
+              name={selectedBonus === '10% Bonus' ? 'checkmark-circle' : 'ellipse-outline'}
+              size={20}
+              color={selectedBonus === '10% Bonus' ? '#22C55E' : '#64748B'}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.offerOption,
+              selectedBonus === 'Flat ₹100 Cashback' && styles.offerOptionActive,
+            ]}
+            onPress={() => setSelectedBonus('Flat ₹100 Cashback')}
+          >
+            <View>
+              <Text style={styles.offerTitle}>Flat ₹100 Cashback</Text>
+              <Text style={styles.offerSub}>On recharge above ₹1000</Text>
+            </View>
+            <Ionicons
+              name={
+                selectedBonus === 'Flat ₹100 Cashback'
+                  ? 'checkmark-circle'
+                  : 'ellipse-outline'
+              }
+              size={20}
+              color={selectedBonus === 'Flat ₹100 Cashback' ? '#22C55E' : '#64748B'}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Recharge Amount</Text>
+            <Text style={styles.summaryValue}>₹{amount || '0'}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Bonus Applied</Text>
+            <Text style={styles.summaryValueGreen}>{selectedBonus}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Processing Fee</Text>
+            <Text style={styles.summaryValue}>₹0</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/payment-methods')}>
+          <Text style={styles.primaryBtnText}>Continue to Payment</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#0F172A",
+  container: { flex: 1, backgroundColor: '#09111F' },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  container: {
-    flex: 1,
+  headerBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#111C2B',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  headerRow: {
+  headerTitle: { color: '#fff', fontSize: 20, fontWeight: '800' },
+  content: { paddingHorizontal: 16, paddingBottom: 30 },
+  balanceCard: {
     marginTop: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backButtonText: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "700",
-    marginTop: -2,
-  },
-  headerTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  headerSpacer: {
-    width: 42,
-    height: 42,
-  },
-  heroCard: {
-    marginTop: 24,
+    backgroundColor: '#111C2B',
     borderRadius: 24,
-    padding: 22,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    padding: 20,
+    alignItems: 'center',
   },
-  heroLabel: {
-    color: "#CBD5E1",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  heroAmount: {
-    color: "#FFFFFF",
-    fontSize: 34,
-    fontWeight: "800",
-    marginTop: 10,
-  },
-  heroSubtext: {
-    color: "#94A3B8",
-    fontSize: 13,
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  section: {
-    marginTop: 24,
-  },
+  balanceLabel: { color: '#94A3B8', fontSize: 13 },
+  balanceAmount: { color: '#fff', fontSize: 34, fontWeight: '900', marginTop: 8 },
+  balanceSub: { color: '#94A3B8', fontSize: 12, marginTop: 8 },
   sectionTitle: {
-    color: "#FFFFFF",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 14,
+    fontWeight: '800',
+    marginTop: 22,
+    marginBottom: 12,
+  },
+  inputCard: {
+    backgroundColor: '#111C2B',
+    borderRadius: 20,
+    height: 74,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currency: {
+    color: '#FACC15',
+    fontSize: 28,
+    fontWeight: '900',
+    marginRight: 10,
+  },
+  amountInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: '800',
   },
   quickGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 14,
   },
-  amountChip: {
-    minWidth: 92,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  quickChip: {
+    backgroundColor: '#111C2B',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  quickChipActive: {
+    backgroundColor: '#8B5CF6',
+  },
+  quickChipText: {
+    color: '#fff',
+    fontWeight: '800',
+  },
+  quickChipTextActive: {
+    color: '#fff',
+  },
+  offerCard: {
+    backgroundColor: '#111C2B',
+    borderRadius: 22,
+    padding: 14,
+  },
+  offerOption: {
+    backgroundColor: '#1F2937',
     borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    padding: 14,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  offerOptionActive: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
+    borderColor: '#22C55E',
   },
-  amountChipActive: {
-    backgroundColor: "#7C3AED",
-    borderColor: "#8B5CF6",
+  offerTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
   },
-  amountChipText: {
-    color: "#E2E8F0",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  amountChipTextActive: {
-    color: "#FFFFFF",
-  },
-  inputWrap: {
-    height: 58,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  rupee: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "700",
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  helperText: {
-    color: "#94A3B8",
+  offerSub: {
+    color: '#94A3B8',
     fontSize: 12,
-    marginTop: 10,
-    lineHeight: 18,
+    marginTop: 4,
   },
-  infoCard: {
-    marginTop: 24,
-    borderRadius: 20,
-    backgroundColor: "rgba(124,58,237,0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(139,92,246,0.25)",
+  summaryCard: {
+    marginTop: 18,
+    backgroundColor: '#111C2B',
+    borderRadius: 22,
     padding: 16,
   },
-  infoTitle: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 10,
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
-  infoText: {
-    color: "#D8B4FE",
+  summaryLabel: {
+    color: '#94A3B8',
     fontSize: 13,
-    lineHeight: 21,
   },
-  primaryButton: {
-    marginTop: 28,
-    height: 56,
+  summaryValue: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  summaryValueGreen: {
+    color: '#22C55E',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  primaryBtn: {
+    marginTop: 22,
+    backgroundColor: '#FACC15',
     borderRadius: 18,
-    backgroundColor: "#7C3AED",
-    alignItems: "center",
-    justifyContent: "center",
+    paddingVertical: 16,
+    alignItems: 'center',
   },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  secondaryButton: {
-    marginTop: 14,
-    height: 54,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryButtonText: {
-    color: "#E2E8F0",
+  primaryBtnText: {
+    color: '#111827',
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: '900',
   },
 });

@@ -2,63 +2,70 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
-const blockedUsersData = [
+const followingData = [
   {
     id: '1',
-    name: 'Rohit Clips',
-    username: '@rohit_clips',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop',
-    reason: 'Spam comments',
+    name: 'Anjali Verma',
+    username: '@anjali_editz',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
+    category: 'Dance Creator',
   },
   {
     id: '2',
-    name: 'Fake Trendz',
-    username: '@fake_trendz',
+    name: 'Harry Beats',
+    username: '@harry_beats',
     avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400&auto=format&fit=crop',
-    reason: 'Abusive messages',
+    category: 'Music Creator',
   },
   {
     id: '3',
-    name: 'Neon Editz',
-    username: '@neon_editz',
+    name: 'Neha Sharma',
+    username: '@neha.creates',
+    avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=400&auto=format&fit=crop',
+    category: 'Lifestyle Creator',
+  },
+  {
+    id: '4',
+    name: 'Studio Vibe',
+    username: '@studio_vibe',
     avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=400&auto=format&fit=crop',
-    reason: 'Repeated mentions',
+    category: 'Production House',
   },
 ];
 
-export default function BlockedUsersScreen() {
+export default function FollowingScreen() {
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
-    return blockedUsersData.filter(
+    return followingData.filter(
       (item) =>
         item.name.toLowerCase().includes(query.toLowerCase()) ||
         item.username.toLowerCase().includes(query.toLowerCase()) ||
-        item.reason.toLowerCase().includes(query.toLowerCase())
+        item.category.toLowerCase().includes(query.toLowerCase())
     );
   }, [query]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#081018" />
+      <StatusBar barStyle="light-content" backgroundColor="#07101D" />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Blocked Users</Text>
+        <Text style={styles.headerTitle}>Following</Text>
 
         <View style={styles.headerBtn} />
       </View>
@@ -68,49 +75,41 @@ export default function BlockedUsersScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search blocked users..."
+          placeholder="Search following..."
           placeholderTextColor="#94A3B8"
           style={styles.searchInput}
         />
       </View>
 
       <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>{filtered.length} Blocked Accounts</Text>
-        <Text style={styles.summarySub}>These users cannot interact with your profile</Text>
+        <Text style={styles.summaryTitle}>248 Following</Text>
+        <Text style={styles.summarySub}>Creators and profiles you follow</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {filtered.map((item) => (
-          <View key={item.id} style={styles.userCard}>
+          <TouchableOpacity key={item.id} style={styles.userCard}>
             <View style={styles.userLeft}>
               <Image source={{ uri: item.avatar }} style={styles.avatar} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.username}>{item.username}</Text>
-                <Text style={styles.reason}>Reason: {item.reason}</Text>
+                <Text style={styles.category}>{item.category}</Text>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.unblockBtn}>
-              <Text style={styles.unblockBtnText}>Unblock</Text>
+            <TouchableOpacity style={styles.followBtn}>
+              <Text style={styles.followBtnText}>Following</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         ))}
-
-        {filtered.length === 0 && (
-          <View style={styles.emptyWrap}>
-            <Ionicons name="ban-outline" size={42} color="#64748B" />
-            <Text style={styles.emptyTitle}>No blocked users found</Text>
-            <Text style={styles.emptySub}>Try another search keyword</Text>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#081018' },
+  container: { flex: 1, backgroundColor: '#07101D' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 10,
@@ -197,13 +196,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  reason: {
-    color: '#FCA5A5',
+  category: {
+    color: '#C4B5FD',
     fontSize: 11,
-    marginTop: 5,
+    marginTop: 4,
     fontWeight: '700',
   },
-  unblockBtn: {
+  followBtn: {
     backgroundColor: '#1F2937',
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -211,24 +210,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
-  unblockBtnText: {
+  followBtnText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '800',
-  },
-  emptyWrap: {
-    marginTop: 60,
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 12,
-  },
-  emptySub: {
-    color: '#94A3B8',
-    fontSize: 13,
-    marginTop: 6,
   },
 });
