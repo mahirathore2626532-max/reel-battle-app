@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -12,13 +12,9 @@ import {
   Text,
   View,
 } from "react-native";
-
-const STATS = [
-  { label: "Followers", value: "12.4K", icon: "people-outline" as const },
-  { label: "Following", value: "684", icon: "person-add-outline" as const },
-  { label: "Battles", value: "128", icon: "flash-outline" as const },
-  { label: "Wins", value: "86", icon: "trophy-outline" as const },
-];
+import { getLoggedInUser, logoutUser } from "../../lib/auth";
+import { getPostsByUser } from "../../services/postService";
+import { getUserProfile } from "../../services/profileService";
 
 const MENU_ITEMS = [
   {
@@ -51,18 +47,51 @@ const MENU_ITEMS = [
     icon: "document-text-outline" as const,
     action: () => router.push("/terms"),
   },
-  {
-    title: "Support",
-    subtitle: "Get help for account or app issues",
-    icon: "help-circle-outline" as const,
-    action: () => Alert.alert("Support", "Support screen baad me add karenge."),
-  },
 ];
 
 export default function ProfileScreen() {
-  const handleLogout = () => {
-    Alert.alert("Logout", "Logout logic baad me connect karenge.");
+  const [name, setName] = useState("Mahaveer Singh");
+  const [username, setUsername] = useState("@reelbattle.creator");
+  const [bio, setBio] = useState("Reel creator");
+  const [followers] = useState("12.4K");
+  const [following] = useState("684");
+  const [userPosts, setUserPosts] = useState("0");
+  const [wins] = useState("0");
+
+  const loadProfile = async () => {
+    try {
+      const user = await getLoggedInUser();
+      if (!user) return;
+
+      const profile = await getUserProfile(user.uid);
+      const posts = await getPostsByUser(user.uid);
+
+      setName((profile?.name as string) || user.name || "User");
+      setUsername(`@${(profile?.username as string) || user.username || "creator"}`);
+      setBio((profile?.bio as string) || "Reel creator");
+      setUserPosts(String(posts.length));
+    } catch (error) {
+      console.log("loadProfile error", error);
+    }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [])
+  );
+
+  const handleLogout = async () => {
+    await logoutUser();
+    router.replace("/login");
+  };
+
+  const stats = [
+    { label: "Followers", value: followers, icon: "people-outline" as const },
+    { label: "Following", value: following, icon: "person-add-outline" as const },
+    { label: "Posts", value: userPosts, icon: "film-outline" as const },
+    { label: "Wins", value: wins, icon: "trophy-outline" as const },
+  ];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -95,15 +124,15 @@ export default function ProfileScreen() {
               style={styles.profileTop}
             >
               <View style={styles.avatarWrap}>
-                <Text style={styles.avatarText}>M</Text>
+                <Text style={styles.avatarText}>
+                  {name?.charAt(0)?.toUpperCase() || "U"}
+                </Text>
               </View>
 
-              <Text style={styles.name}>Mahaveer Singh</Text>
-              <Text style={styles.username}>@reelbattle.creator</Text>
+              <Text style={styles.name}>{name}</Text>
+              <Text style={styles.username}>{username}</Text>
 
-              <Text style={styles.bio}>
-                Short reel creator • Battle enthusiast • Building content daily
-              </Text>
+              <Text style={styles.bio}>{bio}</Text>
 
               <View style={styles.actionRow}>
                 <Pressable
@@ -125,7 +154,7 @@ export default function ProfileScreen() {
             </LinearGradient>
 
             <View style={styles.statsGrid}>
-              {STATS.map((item) => (
+              {stats.map((item) => (
                 <View key={item.label} style={styles.statCard}>
                   <View style={styles.statIconWrap}>
                     <Ionicons name={item.icon} size={18} color="#FFFFFF" />
@@ -168,10 +197,10 @@ export default function ProfileScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>Profile Status</Text>
             <Text style={styles.infoText}>
-              • Profile UI polished{"\n"}
-              • Wallet and transaction links active{"\n"}
-              • Settings and edit profile placeholders ready{"\n"}
-              • Real logout logic pending
+              • User profile Firestore se load ho raha hai{"\n"}
+              • User post count Firestore se aa raha hai{"\n"}
+              • Logout working hai{"\n"}
+              • Edit profile baad me connect karenge
             </Text>
           </View>
 

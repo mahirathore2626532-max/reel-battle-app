@@ -14,6 +14,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { saveLoggedInUser } from "../lib/auth";
+import { createUserProfile } from "../services/profileService";
 
 export default function OtpScreen() {
   const params = useLocalSearchParams<{ phone?: string }>();
@@ -26,13 +28,35 @@ export default function OtpScreen() {
     return `+91 ${phone.slice(0, 2)}******${phone.slice(-2)}`;
   }, [phone]);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.length < 4) {
       Alert.alert("Invalid OTP", "Please enter a valid OTP.");
       return;
     }
 
-    router.replace("/(tabs)/home");
+    try {
+      const demoUser = {
+        uid: phone || "demo_user_1",
+        name: "Mahaveer Singh",
+        phone: phone || "0000000000",
+        username: `user${(phone || "000000").slice(-6)}`,
+      };
+
+      await saveLoggedInUser(demoUser);
+
+      await createUserProfile({
+        uid: demoUser.uid,
+        name: demoUser.name,
+        phone: demoUser.phone,
+        username: demoUser.username,
+        photoURL: "",
+        bio: "Reel creator",
+      });
+
+      router.replace("/(tabs)/home");
+    } catch (error) {
+      Alert.alert("Error", "User profile save nahi ho paya.");
+    }
   };
 
   const handleResend = () => {
@@ -100,7 +124,7 @@ export default function OtpScreen() {
             </View>
 
             <Text style={styles.bottomText}>
-              Real Firebase OTP verification baad me connect karenge.
+              OTP ke baad user Firestore me save ho jayega.
             </Text>
           </View>
         </KeyboardAvoidingView>

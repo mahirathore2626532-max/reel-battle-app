@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
+  RefreshControl,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -12,78 +14,68 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { getAllPosts } from "../../services/postService";
 
-type ReelItem = {
+type PostItem = {
   id: string;
-  name: string;
-  username: string;
+  userId: string;
   title: string;
+  caption: string;
   category: string;
-  likes: number;
-  comments: number;
-  image: string;
+  type: "reel" | "battle";
+  likesCount?: number;
+  commentsCount?: number;
 };
 
-const REELS: ReelItem[] = [
-  {
-    id: "1",
-    name: "Aarav",
-    username: "@aarav.edits",
-    title: "Best cinematic transition reel",
-    category: "Editing",
-    likes: 1240,
-    comments: 88,
-    image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "2",
-    name: "Priya",
-    username: "@priya.creator",
-    title: "Trending dance challenge entry",
-    category: "Dance",
-    likes: 980,
-    comments: 54,
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "3",
-    name: "Rohan",
-    username: "@rohan.vibes",
-    title: "Funny short clip battle",
-    category: "Comedy",
-    likes: 1560,
-    comments: 112,
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: "4",
-    name: "Sneha",
-    username: "@sneha.music",
-    title: "Music vibe reel of the day",
-    category: "Music",
-    likes: 720,
-    comments: 41,
-    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=1200&auto=format&fit=crop",
-  },
-];
-
-const CATEGORIES = ["All", "Editing", "Dance", "Comedy", "Music"];
+const CATEGORIES = ["All", "Editing", "Dance", "Comedy", "Music", "Acting", "Other"];
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [posts, setPosts] = useState<PostItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const filteredReels = useMemo(() => {
-    return REELS.filter((item) => {
+  const loadPosts = async () => {
+    try {
+      const data = (await getAllPosts()) as PostItem[];
+      setPosts(data);
+    } catch (error) {
+      console.log("loadPosts error", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPosts();
+    }, [])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadPosts();
+  };
+
+  const filteredPosts = useMemo(() => {
+    return posts.filter((item) => {
       const matchesCategory =
         selectedCategory === "All" || item.category === selectedCategory;
 
-      const text = `${item.name} ${item.username} ${item.title} ${item.category}`.toLowerCase();
+      const text =
+        `${item.title} ${item.caption} ${item.category} ${item.type}`.toLowerCase();
+
       const matchesSearch = text.includes(search.toLowerCase());
 
       return matchesCategory && matchesSearch;
     });
-  }, [search, selectedCategory]);
+  }, [posts, search, selectedCategory]);
 
   const renderCategory = (item: string) => {
     const active = selectedCategory === item;
@@ -103,51 +95,45 @@ export default function HomeScreen() {
     );
   };
 
-  const renderItem = ({ item }: { item: ReelItem }) => {
+  const renderItem = ({ item }: { item: PostItem }) => {
     return (
       <View style={styles.card}>
-        <Image source={{ uri: item.image }} style={styles.cardImage} />
-
         <LinearGradient
-          colors={["transparent", "rgba(2,6,23,0.45)", "rgba(2,6,23,0.92)"]}
-          style={styles.imageOverlay}
+          colors={["#1E293B", "#0F172A"]}
+          style={styles.cardTop}
         >
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.category}</Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.category}</Text>
+            </View>
+
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeBadgeText}>{item.type}</Text>
+            </View>
           </View>
 
           <Text style={styles.cardTitle}>{item.title}</Text>
 
-          <View style={styles.userRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Text style={styles.nameText}>{item.name}</Text>
-              <Text style={styles.usernameText}>{item.username}</Text>
-            </View>
-
-            <Pressable style={styles.followBtn}>
-              <Text style={styles.followBtnText}>Follow</Text>
-            </Pressable>
-          </View>
+          <Text style={styles.cardCaption}>
+            {item.caption?.trim() ? item.caption : "No caption added."}
+          </Text>
         </LinearGradient>
 
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Ionicons name="heart" size={18} color="#EF4444" />
-            <Text style={styles.statText}>{item.likes}</Text>
+            <Text style={styles.statText}>{item.likesCount ?? 0}</Text>
           </View>
 
           <View style={styles.statItem}>
             <Ionicons name="chatbubble-ellipses" size={18} color="#60A5FA" />
-            <Text style={styles.statText}>{item.comments}</Text>
+            <Text style={styles.statText}>{item.commentsCount ?? 0}</Text>
           </View>
 
-          <Pressable style={styles.viewBtn}>
-            <Text style={styles.viewBtnText}>View Battle</Text>
-          </Pressable>
+          <View style={styles.statItem}>
+            <Ionicons name="person-circle-outline" size={18} color="#A78BFA" />
+            <Text style={styles.statText}>{item.userId}</Text>
+          </View>
         </View>
       </View>
     );
@@ -157,71 +143,83 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={["#0F172A", "#111827", "#020617"]} style={styles.container}>
-        <FlatList
-          data={filteredReels}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          ListHeaderComponent={
-            <View>
-              <View style={styles.headerRow}>
-                <View>
-                  <Text style={styles.greeting}>Welcome back</Text>
-                  <Text style={styles.heading}>Reel Battle</Text>
+        {loading ? (
+          <View style={styles.loaderWrap}>
+            <ActivityIndicator size="large" color="#7C3AED" />
+            <Text style={styles.loaderText}>Loading posts...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredPosts}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ListHeaderComponent={
+              <View>
+                <View style={styles.headerRow}>
+                  <View>
+                    <Text style={styles.greeting}>Welcome back</Text>
+                    <Text style={styles.heading}>Reel Battle</Text>
+                  </View>
+
+                  <Pressable style={styles.notificationBtn}>
+                    <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
+                  </Pressable>
                 </View>
 
-                <Pressable style={styles.notificationBtn}>
-                  <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
-                </Pressable>
-              </View>
+                <View style={styles.heroCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.heroSmall}>Firestore Connected</Text>
+                    <Text style={styles.heroTitle}>Live Reel Posts</Text>
+                    <Text style={styles.heroText}>
+                      Ab home screen par real Firestore posts load ho rahe hain.
+                    </Text>
+                  </View>
 
-              <View style={styles.heroCard}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.heroSmall}>Today’s Highlight</Text>
-                  <Text style={styles.heroTitle}>Trending Reel Battles</Text>
-                  <Text style={styles.heroText}>
-                    Explore top creators, vote on the best reels, and grow your audience.
-                  </Text>
+                  <View style={styles.heroIconWrap}>
+                    <Ionicons name="server-outline" size={42} color="#FFFFFF" />
+                  </View>
                 </View>
 
-                <View style={styles.heroIconWrap}>
-                  <Ionicons name="play-circle" size={42} color="#FFFFFF" />
+                <View style={styles.searchWrap}>
+                  <Ionicons name="search" size={18} color="#94A3B8" />
+                  <TextInput
+                    placeholder="Search title, caption, category..."
+                    placeholderTextColor="#94A3B8"
+                    value={search}
+                    onChangeText={setSearch}
+                    style={styles.searchInput}
+                  />
+                </View>
+
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Categories</Text>
+                  <Text style={styles.sectionSubtitle}>{filteredPosts.length} results</Text>
+                </View>
+
+                <View style={styles.categoryRow}>{CATEGORIES.map(renderCategory)}</View>
+
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Latest Posts</Text>
+                  <Text style={styles.sectionSubtitle}>Live from Firestore</Text>
                 </View>
               </View>
-
-              <View style={styles.searchWrap}>
-                <Ionicons name="search" size={18} color="#94A3B8" />
-                <TextInput
-                  placeholder="Search creators, category, reels..."
-                  placeholderTextColor="#94A3B8"
-                  value={search}
-                  onChangeText={setSearch}
-                  style={styles.searchInput}
-                />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Ionicons name="film-outline" size={42} color="#94A3B8" />
+                <Text style={styles.emptyTitle}>No posts found</Text>
+                <Text style={styles.emptyText}>
+                  Upload screen se first post create karo.
+                </Text>
               </View>
-
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Categories</Text>
-                <Text style={styles.sectionSubtitle}>{filteredReels.length} results</Text>
-              </View>
-
-              <View style={styles.categoryRow}>{CATEGORIES.map(renderCategory)}</View>
-
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Top Battles</Text>
-                <Text style={styles.sectionSubtitle}>Fresh picks for you</Text>
-              </View>
-            </View>
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyWrap}>
-              <Ionicons name="film-outline" size={42} color="#94A3B8" />
-              <Text style={styles.emptyTitle}>No reels found</Text>
-              <Text style={styles.emptyText}>Try changing search or category.</Text>
-            </View>
-          }
-        />
+            }
+          />
+        )}
       </LinearGradient>
     </SafeAreaView>
   );
@@ -234,6 +232,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  loaderWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loaderText: {
+    marginTop: 12,
+    color: "#CBD5E1",
+    fontSize: 14,
+    fontWeight: "600",
   },
   listContent: {
     padding: 18,
@@ -366,17 +375,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
   },
-  cardImage: {
-    width: "100%",
-    height: 280,
+  cardTop: {
+    padding: 18,
   },
-  imageOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 16,
-    paddingTop: 60,
+  badgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 14,
   },
   badge: {
     alignSelf: "flex-start",
@@ -384,12 +389,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    marginBottom: 10,
   },
   badgeText: {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "800",
+  },
+  typeBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  typeBadgeText: {
+    color: "#E2E8F0",
+    fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
   },
   cardTitle: {
     color: "#FFFFFF",
@@ -397,74 +414,29 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     lineHeight: 28,
   },
-  userRow: {
-    marginTop: 14,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  nameText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  usernameText: {
+  cardCaption: {
     color: "#CBD5E1",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  followBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
-  },
-  followBtnText: {
-    color: "#111827",
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 8,
   },
   statsRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 14,
   },
   statItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 18,
   },
   statText: {
     color: "#E2E8F0",
     marginLeft: 6,
     fontSize: 13,
     fontWeight: "700",
-  },
-  viewBtn: {
-    marginLeft: "auto",
-    backgroundColor: "#7C3AED",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-  },
-  viewBtnText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "800",
   },
   emptyWrap: {
     paddingVertical: 60,

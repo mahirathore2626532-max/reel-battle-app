@@ -12,6 +12,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { getLoggedInUser } from "../../lib/auth";
+import { createPost } from "../../services/postService";
 
 const CATEGORIES = ["Editing", "Dance", "Comedy", "Music", "Acting", "Other"];
 
@@ -29,11 +31,11 @@ export default function UploadScreen() {
   const handlePickVideo = () => {
     Alert.alert(
       "Upload disabled",
-      "Video picker aur real upload feature baad me connect karenge."
+      "Video picker aur real storage upload baad me connect karenge."
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) {
       Alert.alert("Title required", "Please enter a reel title.");
       return;
@@ -44,10 +46,35 @@ export default function UploadScreen() {
       return;
     }
 
-    Alert.alert(
-      "Draft ready",
-      `Your ${selectedMode} post UI ready hai.\n\nReal upload and storage integration baad me add karenge.`
-    );
+    try {
+      const user = await getLoggedInUser();
+
+      if (!user) {
+        Alert.alert("Login required", "Please login first.");
+        return;
+      }
+
+      await createPost({
+        userId: user.uid,
+        title: title.trim(),
+        caption: caption.trim(),
+        category: selectedCategory,
+        type: selectedMode,
+        videoUrl: "",
+        thumbnailUrl: "",
+      });
+
+      Alert.alert("Success", "Post Firestore me save ho gaya.");
+
+      setTitle("");
+      setCaption("");
+      setSelectedCategory("Editing");
+      setSelectedMode("reel");
+      setAllowComments(true);
+      setAgreeRules(true);
+    } catch (error) {
+      Alert.alert("Error", "Post save nahi ho paya.");
+    }
   };
 
   const renderCategoryChip = (item: string) => {
@@ -93,7 +120,7 @@ export default function UploadScreen() {
               <Text style={styles.heroBadge}>Creator Studio</Text>
               <Text style={styles.heroTitle}>Share your best reel battle</Text>
               <Text style={styles.heroText}>
-                Post setup ready hai. Video picker aur storage upload baad me connect karenge.
+                Ab title, caption, category aur type Firestore me save honge.
               </Text>
             </View>
 
@@ -180,7 +207,7 @@ export default function UploadScreen() {
                 Tap to choose a reel video from device
               </Text>
               <Text style={styles.uploadHint}>
-                MP4 / MOV • Upload disabled for now
+                Storage upload abhi pending hai
               </Text>
             </Pressable>
           </View>
@@ -292,10 +319,10 @@ export default function UploadScreen() {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>Current Upload Status</Text>
             <Text style={styles.infoText}>
-              • Upload UI complete{"\n"}
-              • Video picker placeholder active{"\n"}
-              • Storage upload pending{"\n"}
-              • Submit button working as draft action
+              • User-based post save active{"\n"}
+              • Firestore save active{"\n"}
+              • Video upload pending{"\n"}
+              • Comments toggle UI only
             </Text>
           </View>
 

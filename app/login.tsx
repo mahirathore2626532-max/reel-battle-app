@@ -86,8 +86,7 @@ export default function LoginScreen() {
                   color="#C4B5FD"
                 />
                 <Text style={styles.infoText}>
-                  OTP verification UI ready hai. Real OTP backend baad me connect
-                  karenge.
+                  OTP verification ke baad user Firestore me save hoga.
                 </Text>
               </View>
 
