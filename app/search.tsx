@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useMemo, useState } from "react";
 import {
   Image,
   SafeAreaView,
@@ -11,60 +11,60 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-const categories = ['All', 'Creators', 'Reels', 'Battles'];
+const categories = ["All", "Creators", "Reels", "Battles"];
 
 const searchData = [
   {
-    id: '1',
-    type: 'Creators',
-    title: 'Mahaveer Singh',
-    subtitle: '@mahaveer_creates • 12.4K followers',
+    id: "1",
+    type: "Creators",
+    title: "Mahaveer Singh",
+    subtitle: "@mahaveer_creates • 12.4K followers",
     image:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop',
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop",
   },
   {
-    id: '2',
-    type: 'Creators',
-    title: 'Anjali Verma',
-    subtitle: '@anjali_editz • 18.1K followers',
+    id: "2",
+    type: "Creators",
+    title: "Anjali Verma",
+    subtitle: "@anjali_editz • 18.1K followers",
     image:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop",
   },
   {
-    id: '3',
-    type: 'Reels',
-    title: 'Epic Dance Battle',
-    subtitle: 'Trending reel • 98.3K views',
+    id: "3",
+    type: "Reels",
+    title: "Epic Dance Battle",
+    subtitle: "Trending reel • 98.3K views",
     image:
-      'https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1200&auto=format&fit=crop',
+      "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1200&auto=format&fit=crop",
   },
   {
-    id: '4',
-    type: 'Battles',
-    title: 'Dance Faceoff 2026',
-    subtitle: 'Prize pool ₹5,000 • Ends tonight',
+    id: "4",
+    type: "Battles",
+    title: "Dance Faceoff 2026",
+    subtitle: "Prize pool ₹5,000 • Ends tonight",
     image:
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=1200&auto=format&fit=crop',
+      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=1200&auto=format&fit=crop",
   },
   {
-    id: '5',
-    type: 'Reels',
-    title: 'Beat Sync Challenge',
-    subtitle: 'Featured reel • 75.2K views',
+    id: "5",
+    type: "Reels",
+    title: "Beat Sync Challenge",
+    subtitle: "Featured reel • 75.2K views",
     image:
-      'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=1200&auto=format&fit=crop',
+      "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=1200&auto=format&fit=crop",
   },
 ];
 
 export default function SearchScreen() {
-  const [query, setQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const filtered = useMemo(() => {
     return searchData.filter((item) => {
-      const byType = selectedCategory === 'All' || item.type === selectedCategory;
+      const byType = selectedCategory === "All" || item.type === selectedCategory;
       const byQuery =
         item.title.toLowerCase().includes(query.toLowerCase()) ||
         item.subtitle.toLowerCase().includes(query.toLowerCase());
@@ -72,6 +72,22 @@ export default function SearchScreen() {
       return byType && byQuery;
     });
   }, [query, selectedCategory]);
+
+  const handleCardPress = (item: (typeof searchData)[0]) => {
+    if (item.type === "Reels") {
+      router.push("/post-detail");
+      return;
+    }
+
+    if (item.type === "Creators") {
+      router.push("/(tabs)/profile");
+      return;
+    }
+
+    if (item.type === "Battles") {
+      router.push("/post-detail");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,10 +107,19 @@ export default function SearchScreen() {
             placeholderTextColor="#94A3B8"
             style={styles.searchInput}
           />
+          {query.length > 0 ? (
+            <TouchableOpacity onPress={() => setQuery("")}>
+              <Ionicons name="close-circle" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryRow}
+      >
         {categories.map((item) => {
           const active = selectedCategory === item;
           return (
@@ -102,6 +127,7 @@ export default function SearchScreen() {
               key={item}
               style={[styles.categoryChip, active && styles.categoryChipActive]}
               onPress={() => setSelectedCategory(item)}
+              activeOpacity={0.8}
             >
               <Text style={[styles.categoryText, active && styles.categoryTextActive]}>
                 {item}
@@ -118,7 +144,12 @@ export default function SearchScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
         {filtered.map((item) => (
-          <TouchableOpacity key={item.id} style={styles.resultCard}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.resultCard}
+            activeOpacity={0.7}
+            onPress={() => handleCardPress(item)}
+          >
             <Image source={{ uri: item.image }} style={styles.resultImage} />
             <View style={styles.resultBody}>
               <View style={styles.typeChip}>
@@ -144,35 +175,35 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#081018' },
+  container: { flex: 1, backgroundColor: "#081018" },
   header: {
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   backBtn: {
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#111C2B',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#111C2B",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 10,
   },
   searchWrap: {
     flex: 1,
     height: 52,
-    backgroundColor: '#111C2B',
+    backgroundColor: "#111C2B",
     borderRadius: 16,
     paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   searchInput: {
     flex: 1,
-    color: '#fff',
+    color: "#fff",
     marginLeft: 8,
     fontSize: 14,
   },
@@ -183,36 +214,36 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   categoryChip: {
-    backgroundColor: '#111C2B',
+    backgroundColor: "#111C2B",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 999,
   },
   categoryChipActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: "#8B5CF6",
   },
   categoryText: {
-    color: '#CBD5E1',
-    fontWeight: '700',
+    color: "#CBD5E1",
+    fontWeight: "700",
   },
   categoryTextActive: {
-    color: '#fff',
+    color: "#fff",
   },
   sectionHeader: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   sectionTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   sectionCount: {
-    color: '#94A3B8',
+    color: "#94A3B8",
     fontSize: 12,
   },
   listContent: {
@@ -221,12 +252,12 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   resultCard: {
-    backgroundColor: '#111C2B',
+    backgroundColor: "#111C2B",
     borderRadius: 18,
     padding: 12,
     marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   resultImage: {
     width: 58,
@@ -239,41 +270,41 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   typeChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(139,92,246,0.14)',
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(139,92,246,0.14)",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
     marginBottom: 8,
   },
   typeChipText: {
-    color: '#A78BFA',
+    color: "#A78BFA",
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   resultTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   resultSubtitle: {
-    color: '#94A3B8',
+    color: "#94A3B8",
     fontSize: 12,
     lineHeight: 18,
     marginTop: 5,
   },
   emptyWrap: {
     marginTop: 60,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
     marginTop: 10,
   },
   emptySub: {
-    color: '#94A3B8',
+    color: "#94A3B8",
     fontSize: 13,
     marginTop: 6,
   },

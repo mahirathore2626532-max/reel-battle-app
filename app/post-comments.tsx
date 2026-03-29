@@ -1,317 +1,206 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
-  Image,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-const commentsData = [
-  {
-    id: '1',
-    user: '@anjali_editz',
-    name: 'Anjali',
-    text: 'Lighting and transitions are next level 🔥',
-    time: '2m ago',
-    likes: 24,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop',
-  },
-  {
-    id: '2',
-    user: '@harry_beats',
-    name: 'Harry',
-    text: 'Beat sync bahut mast hai bro 👏',
-    time: '9m ago',
-    likes: 15,
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400&auto=format&fit=crop',
-  },
-  {
-    id: '3',
-    user: '@studio_vibe',
-    name: 'Studio Vibe',
-    text: 'Camera movement smooth hai. Kis device pe shoot kiya?',
-    time: '18m ago',
-    likes: 8,
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop',
-  },
-  {
-    id: '4',
-    user: '@neha.creates',
-    name: 'Neha',
-    text: 'Costume colors and frame composition dono perfect lag rahe hain ✨',
-    time: '34m ago',
-    likes: 11,
-    avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=400&auto=format&fit=crop',
-  },
+const initialComments = [
+  { id: "1", user: "vikas_editz", text: "Bhai mast reel hai 🔥", time: "2m", likes: 12 },
+  { id: "2", user: "reel_queen", text: "Transition bahut clean hai", time: "6m", likes: 8 },
+  { id: "3", user: "aryan_creator", text: "Audio combo top level 👏", time: "15m", likes: 5 },
 ];
 
 export default function PostCommentsScreen() {
-  const params = useLocalSearchParams();
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState(initialComments);
 
-  const postTitle = useMemo(() => {
-    return typeof params.title === 'string' ? params.title : 'Epic Dance Battle';
-  }, [params.title]);
+  const handleSend = () => {
+    if (!comment.trim()) return;
+
+    const newItem = {
+      id: Date.now().toString(),
+      user: "you",
+      text: comment.trim(),
+      time: "now",
+      likes: 0,
+    };
+
+    setComments([newItem, ...comments]);
+    setComment("");
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#070B14" />
-
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-
-        <View style={{ flex: 1, marginHorizontal: 12 }}>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="light-content" backgroundColor="#0b0b0f" />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={20} color="#fff" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Comments</Text>
-          <Text style={styles.headerSub} numberOfLines={1}>
-            {postTitle}
-          </Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        <TouchableOpacity style={styles.headerBtn}>
-          <Ionicons name="filter-outline" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.highlightCard}>
-        <View style={styles.highlightLeft}>
-          <Ionicons name="chatbubbles-outline" size={22} color="#7C3AED" />
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.highlightTitle}>1,284 Comments</Text>
-            <Text style={styles.highlightSub}>Most reactions in last 24 hours</Text>
-          </View>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>1,843 Comments</Text>
+          <Text style={styles.summarySub}>Join the conversation on this post</Text>
         </View>
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-        {commentsData.map((item) => (
-          <View key={item.id} style={styles.commentCard}>
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        <FlatList
+          data={comments}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          renderItem={({ item }) => (
+            <View style={styles.commentCard}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{item.user.charAt(0).toUpperCase()}</Text>
+              </View>
 
-            <View style={styles.commentBody}>
-              <View style={styles.commentTop}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.username}>{item.user}</Text>
+              <View style={styles.commentContent}>
+                <View style={styles.rowTop}>
+                  <Text style={styles.user}>{item.user}</Text>
                   <Text style={styles.time}>{item.time}</Text>
                 </View>
 
-                <TouchableOpacity style={styles.likeChip}>
-                  <Ionicons name="heart-outline" size={14} color="#fff" />
-                  <Text style={styles.likeChipText}>{item.likes}</Text>
-                </TouchableOpacity>
-              </View>
+                <Text style={styles.commentText}>{item.text}</Text>
 
-              <Text style={styles.commentText}>{item.text}</Text>
+                <View style={styles.commentActions}>
+                  <TouchableOpacity style={styles.smallAction}>
+                    <Ionicons name="heart-outline" size={15} color="#9b9ba5" />
+                    <Text style={styles.smallActionText}>{item.likes}</Text>
+                  </TouchableOpacity>
 
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionMiniBtn}>
-                  <Ionicons name="chatbubble-outline" size={16} color="#CBD5E1" />
-                  <Text style={styles.actionMiniText}>Reply</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionMiniBtn}>
-                  <Ionicons name="heart-outline" size={16} color="#CBD5E1" />
-                  <Text style={styles.actionMiniText}>Like</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.actionMiniBtn}>
-                  <Ionicons name="flag-outline" size={16} color="#CBD5E1" />
-                  <Text style={styles.actionMiniText}>Report</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity style={styles.smallAction}>
+                    <Ionicons name="chatbubble-outline" size={15} color="#9b9ba5" />
+                    <Text style={styles.smallActionText}>Reply</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        ))}
-      </ScrollView>
+          )}
+        />
 
-      <View style={styles.inputWrap}>
-        <View style={styles.inputBox}>
-          <TextInput
-            value={comment}
-            onChangeText={setComment}
-            placeholder="Write a comment..."
-            placeholderTextColor="#94A3B8"
-            style={styles.input}
-          />
-          <TouchableOpacity style={styles.emojiBtn}>
-            <Ionicons name="happy-outline" size={20} color="#CBD5E1" />
+        <View style={styles.inputBar}>
+          <View style={styles.inputWrap}>
+            <TextInput
+              value={comment}
+              onChangeText={setComment}
+              placeholder="Add a comment..."
+              placeholderTextColor="#7c7c86"
+              style={styles.input}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
+            <Ionicons name="send" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.sendBtn}>
-          <Ionicons name="send" size={18} color="#0F172A" />
-        </TouchableOpacity>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#070B14',
-  },
+  safe: { flex: 1, backgroundColor: "#0b0b0f" },
+  container: { flex: 1, backgroundColor: "#0b0b0f", paddingHorizontal: 16, paddingTop: 10 },
+
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
   },
-  headerBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: '#121826',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 19,
-    fontWeight: '800',
-  },
-  headerSub: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  highlightCard: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    backgroundColor: '#121826',
-    borderRadius: 18,
-    padding: 14,
-  },
-  highlightLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  highlightTitle: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  highlightSub: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 110,
-  },
-  commentCard: {
-    flexDirection: 'row',
-    backgroundColor: '#121826',
+  backBtn: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: "#17171d",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: { color: "#fff", fontSize: 22, fontWeight: "800" },
+
+  summaryCard: {
+    backgroundColor: "#17171d",
+    borderWidth: 1,
+    borderColor: "#24242c",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+  },
+  summaryTitle: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  summarySub: { color: "#8b8b95", fontSize: 13, marginTop: 4 },
+
+  commentCard: {
+    flexDirection: "row",
+    marginBottom: 14,
+    backgroundColor: "#141419",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#202028",
     padding: 14,
-    marginBottom: 12,
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#ff3b5c",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
-  commentBody: {
-    flex: 1,
-  },
-  commentTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  username: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  time: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 3,
-  },
-  likeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1F2937',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    gap: 5,
-  },
-  likeChipText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  commentText: {
-    color: '#E2E8F0',
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 10,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 12,
-    gap: 10,
-  },
-  actionMiniBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#1F2937',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  actionMiniText: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  inputWrap: {
-    position: 'absolute',
+  avatarText: { color: "#fff", fontWeight: "800" },
+
+  commentContent: { flex: 1 },
+  rowTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  user: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  time: { color: "#8b8b95", fontSize: 12 },
+  commentText: { color: "#dadade", marginTop: 6, lineHeight: 20 },
+
+  commentActions: { flexDirection: "row", alignItems: "center", gap: 18, marginTop: 10 },
+  smallAction: { flexDirection: "row", alignItems: "center", gap: 6 },
+  smallActionText: { color: "#9b9ba5", fontSize: 12, fontWeight: "600" },
+
+  inputBar: {
+    position: "absolute",
     left: 16,
     right: 16,
-    bottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    bottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
-  inputBox: {
+  inputWrap: {
     flex: 1,
-    backgroundColor: '#121826',
-    borderRadius: 18,
+    backgroundColor: "#17171d",
+    borderWidth: 1,
+    borderColor: "#24242c",
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
+    height: 52,
+    justifyContent: "center",
   },
-  input: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 14,
-  },
-  emojiBtn: {
-    marginLeft: 8,
-  },
+  input: { color: "#fff", fontSize: 14 },
   sendBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: '#FACC15',
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 52,
+    width: 52,
+    borderRadius: 16,
+    backgroundColor: "#ff3b5c",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

@@ -1,336 +1,193 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React from "react";
 import {
+  FlatList,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-const quickActions = [
-  { id: '1', title: 'Add Money', icon: 'add-circle-outline' as const },
-  { id: '2', title: 'Withdraw', icon: 'wallet-outline' as const },
-  { id: '3', title: 'History', icon: 'time-outline' as const },
-  { id: '4', title: 'Rewards', icon: 'gift-outline' as const },
-];
-
-const cards = [
-  { id: '1', title: 'Winning Balance', amount: '₹2,450' },
-  { id: '2', title: 'Bonus Balance', amount: '₹320' },
-  { id: '3', title: 'Referral Earnings', amount: '₹180' },
+const transactions = [
+  { id: "1", title: "Battle Win Reward", time: "Today, 10:25 AM", amount: "+₹120", type: "credit" },
+  { id: "2", title: "Contest Entry Fee", time: "Today, 09:10 AM", amount: "-₹30", type: "debit" },
+  { id: "3", title: "Referral Bonus", time: "Yesterday, 07:40 PM", amount: "+₹50", type: "credit" },
+  { id: "4", title: "Withdrawal", time: "Yesterday, 01:15 PM", amount: "-₹100", type: "debit" },
 ];
 
 export default function WalletScreen() {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="light-content" backgroundColor="#0b0b0f" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={20} color="#fff" />
+          </TouchableOpacity>
 
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
+          <Text style={styles.headerTitle}>Wallet</Text>
 
-        <Text style={styles.headerTitle}>Wallet</Text>
-
-        <TouchableOpacity style={styles.iconBtn}>
-          <Ionicons name="notifications-outline" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceAmount}>₹12,580</Text>
-
-          <View style={styles.balanceRow}>
-            <View style={styles.balanceInfoBox}>
-              <Text style={styles.balanceInfoValue}>₹4,200</Text>
-              <Text style={styles.balanceInfoLabel}>Withdrawable</Text>
-            </View>
-
-            <View style={styles.balanceDivider} />
-
-            <View style={styles.balanceInfoBox}>
-              <Text style={styles.balanceInfoValue}>₹8,380</Text>
-              <Text style={styles.balanceInfoLabel}>In App</Text>
-            </View>
-          </View>
-
-          <View style={styles.primaryBtnRow}>
-            <TouchableOpacity style={styles.primaryBtn}>
-              <Ionicons name="add" size={18} color="#0F172A" />
-              <Text style={styles.primaryBtnText}>Add Money</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.secondaryBtn}>
-              <Ionicons name="arrow-down-circle-outline" size={18} color="#fff" />
-              <Text style={styles.secondaryBtnText}>Withdraw</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickGrid}>
-          {quickActions.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.quickCard}>
-              <View style={styles.quickIconWrap}>
-                <Ionicons name={item.icon} size={24} color="#7C3AED" />
-              </View>
-              <Text style={styles.quickText}>{item.title}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.sectionTitle}>Wallet Breakdown</Text>
-        {cards.map((item) => (
-          <View key={item.id} style={styles.infoCard}>
-            <View>
-              <Text style={styles.infoCardTitle}>{item.title}</Text>
-              <Text style={styles.infoCardSub}>Updated just now</Text>
-            </View>
-            <Text style={styles.infoCardAmount}>{item.amount}</Text>
-          </View>
-        ))}
-
-        <Text style={styles.sectionTitle}>Offer</Text>
-        <View style={styles.offerCard}>
-          <View style={styles.offerLeft}>
-            <View style={styles.offerBadge}>
-              <Ionicons name="flash" size={16} color="#fff" />
-            </View>
-            <View>
-              <Text style={styles.offerTitle}>Get 10% bonus on recharge</Text>
-              <Text style={styles.offerSub}>Add ₹500 or more to unlock bonus</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.claimBtn}>
-            <Text style={styles.claimBtnText}>Claim</Text>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push("/transactions")}>
+            <Ionicons name="receipt-outline" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Available Balance</Text>
+          <Text style={styles.balanceValue}>₹1,240</Text>
+
+          <View style={styles.balanceMetaRow}>
+            <View style={styles.metaPill}>
+              <Ionicons name="trending-up-outline" size={14} color="#7CFFB2" />
+              <Text style={styles.metaText}>+12.4% this week</Text>
+            </View>
+            <View style={styles.metaPill}>
+              <Ionicons name="wallet-outline" size={14} color="#fff" />
+              <Text style={styles.metaText}>Active wallet</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn]}>
+            <Ionicons name="add-circle-outline" size={18} color="#fff" />
+            <Text style={styles.actionBtnText}>Add Money</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionBtn, styles.secondaryBtn]}>
+            <Ionicons name="arrow-up-circle-outline" size={18} color="#fff" />
+            <Text style={styles.actionBtnText}>Withdraw</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <TouchableOpacity onPress={() => router.push("/transactions")}>
+            <Text style={styles.seeAll}>See all</Text>
+          </TouchableOpacity>
+        </View>
+
+        <FlatList
+          data={transactions}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          renderItem={({ item }) => {
+            const credit = item.type === "credit";
+            return (
+              <View style={styles.txnCard}>
+                <View style={[styles.txnIconWrap, credit ? styles.creditBg : styles.debitBg]}>
+                  <Ionicons
+                    name={credit ? "arrow-down-outline" : "arrow-up-outline"}
+                    size={18}
+                    color="#fff"
+                  />
+                </View>
+
+                <View style={styles.txnInfo}>
+                  <Text style={styles.txnTitle}>{item.title}</Text>
+                  <Text style={styles.txnTime}>{item.time}</Text>
+                </View>
+
+                <Text style={[styles.txnAmount, credit ? styles.creditText : styles.debitText]}>
+                  {item.amount}
+                </Text>
+              </View>
+            );
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  scrollContent: {
-    paddingBottom: 30,
-  },
+  safe: { flex: 1, backgroundColor: "#0b0b0f" },
+  container: { flex: 1, paddingHorizontal: 16, paddingTop: 10, backgroundColor: "#0b0b0f" },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 18,
   },
+  headerTitle: { color: "#fff", fontSize: 28, fontWeight: "800" },
   iconBtn: {
-    width: 40,
     height: 40,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '800',
+    width: 40,
+    borderRadius: 20,
+    backgroundColor: "#17171d",
+    alignItems: "center",
+    justifyContent: "center",
   },
   balanceCard: {
-    marginHorizontal: 16,
-    marginTop: 8,
+    backgroundColor: "#17171d",
     borderRadius: 24,
-    backgroundColor: '#1E293B',
-    padding: 18,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: "#24242c",
   },
-  balanceLabel: {
-    color: '#94A3B8',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  balanceAmount: {
-    color: '#fff',
-    fontSize: 34,
-    fontWeight: '900',
-  },
-  balanceRow: {
-    marginTop: 18,
-    flexDirection: 'row',
-    backgroundColor: '#0F172A',
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-  },
-  balanceInfoBox: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  balanceInfoValue: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  balanceInfoLabel: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  balanceDivider: {
-    width: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  primaryBtnRow: {
-    flexDirection: 'row',
-    marginTop: 18,
-    gap: 12,
-  },
-  primaryBtn: {
-    flex: 1,
-    backgroundColor: '#FACC15',
-    borderRadius: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  balanceLabel: { color: "#a1a1aa", fontSize: 14, marginBottom: 6 },
+  balanceValue: { color: "#fff", fontSize: 34, fontWeight: "800", marginBottom: 14 },
+  balanceMetaRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  metaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#22222b",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 999,
     gap: 6,
   },
-  primaryBtnText: {
-    color: '#0F172A',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  secondaryBtn: {
+  metaText: { color: "#e4e4e7", fontSize: 12, fontWeight: "600" },
+  actionRow: { flexDirection: "row", gap: 12, marginBottom: 22 },
+  actionBtn: {
     flex: 1,
-    backgroundColor: '#334155',
+    height: 52,
     borderRadius: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
-  secondaryBtnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '800',
-    marginTop: 22,
-    marginBottom: 12,
-    marginHorizontal: 16,
-  },
-  quickGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-  },
-  quickCard: {
-    width: '48%',
-    backgroundColor: '#1E293B',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  quickIconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: 'rgba(124,58,237,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  primaryBtn: { backgroundColor: "#ff3b5c" },
+  secondaryBtn: { backgroundColor: "#262633" },
+  actionBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
-  quickText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  infoCard: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    backgroundColor: '#1E293B',
+  sectionTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  seeAll: { color: "#8b8b95", fontSize: 13, fontWeight: "600" },
+  txnCard: {
+    backgroundColor: "#141419",
     borderRadius: 18,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: "#202028",
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
   },
-  infoCardTitle: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  infoCardSub: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  infoCardAmount: {
-    color: '#22C55E',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  offerCard: {
-    marginHorizontal: 16,
-    marginTop: 4,
-    backgroundColor: '#1E293B',
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  offerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingRight: 10,
-  },
-  offerBadge: {
-    width: 42,
+  txnIconWrap: {
     height: 42,
+    width: 42,
     borderRadius: 14,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
-  offerTitle: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  offerSub: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  claimBtn: {
-    backgroundColor: '#FACC15',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  claimBtnText: {
-    color: '#111827',
-    fontWeight: '800',
-  },
+  creditBg: { backgroundColor: "#1f8f5f" },
+  debitBg: { backgroundColor: "#b33951" },
+  txnInfo: { flex: 1 },
+  txnTitle: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  txnTime: { color: "#8b8b95", fontSize: 12, marginTop: 4 },
+  txnAmount: { fontSize: 15, fontWeight: "800" },
+  creditText: { color: "#7CFFB2" },
+  debitText: { color: "#ff6b81" },
 });

@@ -1,7 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
+  Alert,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -10,99 +11,120 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-
-const settingGroups = [
-  {
-    title: 'Account',
-    items: [
-      { id: '1', title: 'Edit Profile', icon: 'person-outline' as const },
-      { id: '2', title: 'Change Password', icon: 'lock-closed-outline' as const },
-      { id: '3', title: 'Privacy Settings', icon: 'shield-checkmark-outline' as const },
-    ],
-  },
-  {
-    title: 'Preferences',
-    items: [
-      { id: '4', title: 'Language', icon: 'language-outline' as const, value: 'English' },
-      { id: '5', title: 'Theme', icon: 'moon-outline' as const, value: 'Dark' },
-      { id: '6', title: 'Notification Sound', icon: 'volume-high-outline' as const, toggle: true },
-    ],
-  },
-  {
-    title: 'Support',
-    items: [
-      { id: '7', title: 'Help Center', icon: 'help-circle-outline' as const },
-      { id: '8', title: 'Terms & Conditions', icon: 'document-text-outline' as const },
-      { id: '9', title: 'Logout', icon: 'log-out-outline' as const, danger: true },
-    ],
-  },
-];
+} from "react-native";
 
 export default function SettingsScreen() {
+  const [sound, setSound] = useState(true);
+
+  const handlePress = (title: string) => {
+    if (title === "Edit Profile") {
+      router.push("/edit-profile");
+    } else if (title === "Terms & Conditions") {
+      router.push("/terms");
+    } else if (title === "Logout") {
+      Alert.alert("Logout", "Are you sure?", [
+        { text: "Cancel" },
+        { text: "Logout", style: "destructive" },
+      ]);
+    } else {
+      Alert.alert("Coming soon");
+    }
+  };
+
+  const renderItem = (item: any, isLast: boolean) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[styles.itemRow, !isLast && styles.border]}
+      activeOpacity={0.7}
+      onPress={() => handlePress(item.title)}
+    >
+      <View style={styles.left}>
+        <View style={styles.iconWrap}>
+          <Ionicons
+            name={item.icon}
+            size={20}
+            color={item.danger ? "#EF4444" : "#8B5CF6"}
+          />
+        </View>
+        <Text style={[styles.text, item.danger && styles.danger]}>
+          {item.title}
+        </Text>
+      </View>
+
+      {item.toggle ? (
+        <Switch value={sound} onValueChange={setSound} />
+      ) : item.value ? (
+        <View style={styles.right}>
+          <Text style={styles.value}>{item.value}</Text>
+          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+        </View>
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+      )}
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#081018" />
+      <StatusBar barStyle="light-content" />
 
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.btn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.title}>Settings</Text>
 
-        <View style={styles.headerBtn} />
+        <View style={styles.btn} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.profileCard}>
-          <View style={styles.avatarWrap}>
-            <Ionicons name="person" size={26} color="#fff" />
+      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
+        {/* Profile */}
+        <View style={styles.profile}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={24} color="#fff" />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.profileName}>Mahaveer Singh</Text>
-            <Text style={styles.profileSub}>Manage your account and app preferences</Text>
+          <View>
+            <Text style={styles.name}>Mahaveer Singh</Text>
+            <Text style={styles.sub}>Manage your account</Text>
           </View>
         </View>
 
-        {settingGroups.map((group) => (
-          <View key={group.title} style={styles.groupWrap}>
+        {/* Sections */}
+        {[
+          {
+            title: "Account",
+            items: [
+              { id: "1", title: "Edit Profile", icon: "person-outline" },
+              { id: "2", title: "Change Password", icon: "lock-closed-outline" },
+              { id: "3", title: "Privacy Settings", icon: "shield-checkmark-outline" },
+            ],
+          },
+          {
+            title: "Preferences",
+            items: [
+              { id: "4", title: "Language", icon: "language-outline", value: "English" },
+              { id: "5", title: "Theme", icon: "moon-outline", value: "Dark" },
+              { id: "6", title: "Notification Sound", icon: "volume-high-outline", toggle: true },
+            ],
+          },
+          {
+            title: "Support",
+            items: [
+              { id: "7", title: "Help Center", icon: "help-circle-outline" },
+              { id: "8", title: "Terms & Conditions", icon: "document-text-outline" },
+              { id: "9", title: "Logout", icon: "log-out-outline", danger: true },
+            ],
+          },
+        ].map((group) => (
+          <View key={group.title} style={styles.group}>
             <Text style={styles.groupTitle}>{group.title}</Text>
 
-            <View style={styles.groupCard}>
-              {group.items.map((item, index) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.itemRow,
-                    index !== group.items.length - 1 && styles.itemBorder,
-                  ]}
-                >
-                  <View style={styles.itemLeft}>
-                    <View style={styles.itemIconWrap}>
-                      <Ionicons
-                        name={item.icon}
-                        size={20}
-                        color={item.danger ? '#EF4444' : '#8B5CF6'}
-                      />
-                    </View>
-                    <Text style={[styles.itemText, item.danger && styles.dangerText]}>
-                      {item.title}
-                    </Text>
-                  </View>
-
-                  {item.toggle ? (
-                    <Switch value={true} />
-                  ) : item.value ? (
-                    <View style={styles.itemRight}>
-                      <Text style={styles.itemValue}>{item.value}</Text>
-                      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-                    </View>
-                  ) : (
-                    <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-                  )}
-                </TouchableOpacity>
-              ))}
+            <View style={styles.card}>
+              {group.items.map((item, i) =>
+                renderItem(item, i === group.items.length - 1)
+              )}
             </View>
           </View>
         ))}
@@ -112,100 +134,100 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#081018' },
+  container: { flex: 1, backgroundColor: "#081018" },
+
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
   },
-  headerBtn: {
+
+  btn: {
     width: 42,
     height: 42,
+    backgroundColor: "#111C2B",
     borderRadius: 14,
-    backgroundColor: '#111C2B',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  headerTitle: { color: '#fff', fontSize: 20, fontWeight: '800' },
-  content: { paddingBottom: 30 },
-  profileCard: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    backgroundColor: '#111C2B',
-    borderRadius: 20,
+
+  title: { color: "#fff", fontSize: 20, fontWeight: "800" },
+
+  profile: {
+    flexDirection: "row",
+    alignItems: "center",
+    margin: 16,
+    backgroundColor: "#111C2B",
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarWrap: {
-    width: 54,
-    height: 54,
     borderRadius: 18,
-    backgroundColor: '#8B5CF6',
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+
+  avatar: {
+    width: 50,
+    height: 50,
+    backgroundColor: "#8B5CF6",
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
-  profileName: { color: '#fff', fontSize: 17, fontWeight: '800' },
-  profileSub: { color: '#94A3B8', fontSize: 12, marginTop: 4 },
-  groupWrap: {
-    marginTop: 20,
-    paddingHorizontal: 16,
-  },
+
+  name: { color: "#fff", fontWeight: "800" },
+  sub: { color: "#94A3B8", fontSize: 12 },
+
+  group: { marginTop: 16, paddingHorizontal: 16 },
+
   groupTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
     marginBottom: 10,
   },
-  groupCard: {
-    backgroundColor: '#111C2B',
-    borderRadius: 20,
-    overflow: 'hidden',
+
+  card: {
+    backgroundColor: "#111C2B",
+    borderRadius: 18,
+    overflow: "hidden",
   },
+
   itemRow: {
-    minHeight: 62,
+    minHeight: 60,
     paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  itemBorder: {
+
+  border: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderColor: "rgba(255,255,255,0.06)",
   },
-  itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  left: {
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
-  itemIconWrap: {
+
+  iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 14,
-    backgroundColor: '#1F2937',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#1F2937",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
-  itemText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+
+  text: { color: "#fff", fontWeight: "700" },
+  danger: { color: "#EF4444" },
+
+  right: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  dangerText: {
-    color: '#EF4444',
-  },
-  itemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  itemValue: {
-    color: '#94A3B8',
-    fontSize: 13,
+
+  value: {
+    color: "#94A3B8",
     marginRight: 6,
   },
 });
